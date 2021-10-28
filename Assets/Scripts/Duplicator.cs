@@ -4,50 +4,45 @@ using UnityEngine;
 
 public class Duplicator : MonoBehaviour {
     public GameObject hilightprefab;
-    private static GameObject hilighter, lastObject;
-    private static Vector3 lastFace;
+    private static GameObject hilighter;
+    private static Vector3 lastPos;
+    private bool lastDeleting = false;
+    private bool deleting = false;
     private static int numberCubes = 0;
 
     private void Start() {
         numberCubes++;
     }
 
+    private void Update() {
+        deleting = Input.GetMouseButton(1);
+    }
+
     private void OnMouseOver() {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)) {
             if (!hilighter) {
                 AddHilighter(hit);
-            } else if (hit.normal != lastFace || hit.transform.gameObject != lastObject) {
+            } else if (hit.normal + hit.transform.position != lastPos || deleting != lastDeleting) {
                 Destroy(hilighter);
-            } else if (Input.GetMouseButtonDown(1) && numberCubes > 1) {
-                numberCubes--;
-                Destroy(hit.transform.gameObject);
             }
         }
     }
 
     private void OnMouseDown() {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)) {
-
-
-
-            Debug.Log("hit!");
-            DuplicateFace(hit);
+            if (!deleting) {
+                DuplicateFace(hit);
+            } else if (numberCubes > 1) {
+                numberCubes--;
+                Destroy(hit.transform.gameObject);
+            }            
         } 
     }
 
-    private void OnMouseUp() {
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)) {
-            Debug.Log("hit!");
-            DuplicateFace(hit);
-        } else {
-            Debug.Log("registered");
-        }
-    }
-
     private void AddHilighter(RaycastHit hit) {
-        lastFace = hit.normal;
-        lastObject = gameObject;
-        hilighter = Instantiate(hilightprefab, transform.position + hit.normal, transform.rotation, transform.parent);
+        lastDeleting = deleting;
+        lastPos = hit.normal + hit.transform.position;
+        hilighter = Instantiate(hilightprefab, transform.position + (deleting ? Vector3.zero : hit.normal), transform.rotation, transform.parent);
     }
 
     private void DuplicateFace(RaycastHit hit) {
