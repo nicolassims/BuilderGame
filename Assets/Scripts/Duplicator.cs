@@ -3,38 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Duplicator : MonoBehaviour {
+    public MasterScript master;
     public GameObject hilightprefab;//the prefab used to indicate what part of the object has been selected
     private static GameObject hilighter;//the actual instance of the prefab specified above
     private static Vector3 lastPos;//the position the highlighter last occupied.
+    
 
     private bool lastDeleting = false;//whether the last highlighter was a deleting highlighter
-    private bool deleting = false;//whether the cursor is now in deleting mode
     private static int numberCubes = 0;//the total number of cubes in this game
-
-    private static float size = 1.0f;//how large the blocks are, relative to 1.
     private static float lastSize = 1.0f;
 
-    private float personalSize = 1.0f;
+    private float personalSize = 1.0f;//how large this specific block is
 
     private void Start() {
         numberCubes++;
-    }
-
-    private void Update() {
-        float scrollDelta = Input.mouseScrollDelta.y;
-        if (scrollDelta > 0) {
-                size *= 2;
-        } else if (scrollDelta < 0) {
-                size /= 2;
-        }
-        deleting = Input.GetMouseButton(1);
     }
 
     private void OnMouseOver() {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)) {
             if (!hilighter) {
                 AddHilighter(hit);
-            } else if (hit.normal + hit.transform.position != lastPos || deleting != lastDeleting || lastSize != size) {
+            } else if (hit.normal + hit.transform.position != lastPos || master.deleting != lastDeleting || lastSize != master.size) {
                 Destroy(hilighter);
             }
         }
@@ -42,7 +31,7 @@ public class Duplicator : MonoBehaviour {
 
     private void OnMouseDown() {
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)) {
-            if (!deleting) {
+            if (!master.deleting) {
                 DuplicateFace(hit);
             } else if (numberCubes > 1) {
                 numberCubes--;
@@ -52,22 +41,22 @@ public class Duplicator : MonoBehaviour {
     }
 
     private Vector3 calculatePos(RaycastHit hit) {
-        return deleting 
+        return master.deleting 
             ? transform.position
-            : transform.position + hit.normal * ((size + hit.transform.gameObject.GetComponent<Duplicator>().personalSize) * 0.5f);
+            : transform.position + hit.normal * ((master.size + hit.transform.gameObject.GetComponent<Duplicator>().personalSize) * 0.5f);
     } 
 
     private void AddHilighter(RaycastHit hit) {
-        lastDeleting = deleting;
+        lastDeleting = master.deleting;
         lastPos = hit.normal + hit.transform.position;
-        lastSize = size;
+        lastSize = master.size;
         hilighter = Instantiate(hilightprefab, calculatePos(hit), transform.rotation, transform.parent);
-        hilighter.transform.localScale = (deleting ? hit.transform.localScale : Vector3.one * size);
+        hilighter.transform.localScale = (master.deleting ? hit.transform.localScale : Vector3.one * master.size);
     }
 
     private void DuplicateFace(RaycastHit hit) {
         GameObject dupe = Instantiate(gameObject, calculatePos(hit), transform.rotation, transform.parent);
-        dupe.transform.localScale = Vector3.one * size;
-        dupe.GetComponent<Duplicator>().personalSize = size;
+        dupe.transform.localScale = Vector3.one * master.size;
+        dupe.GetComponent<Duplicator>().personalSize = master.size;
     }
 }
