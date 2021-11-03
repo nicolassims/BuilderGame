@@ -14,6 +14,8 @@ public class Duplicator : MonoBehaviour {
     private static float size = 1.0f;//how large the blocks are, relative to 1.
     private static float lastSize = 1.0f;
 
+    private float personalSize = 1.0f;
+
     private void Start() {
         numberCubes++;
     }
@@ -49,16 +51,23 @@ public class Duplicator : MonoBehaviour {
         } 
     }
 
+    private Vector3 calculatePos(RaycastHit hit) {
+        return deleting 
+            ? transform.position
+            : transform.position + hit.normal * ((size + hit.transform.gameObject.GetComponent<Duplicator>().personalSize) * 0.5f);
+    } 
+
     private void AddHilighter(RaycastHit hit) {
         lastDeleting = deleting;
         lastPos = hit.normal + hit.transform.position;
         lastSize = size;
-        hilighter = Instantiate(hilightprefab, transform.position + (deleting ? Vector3.zero : hit.normal) * ((size + 1) * 0.5f), transform.rotation, transform.parent);
+        hilighter = Instantiate(hilightprefab, calculatePos(hit), transform.rotation, transform.parent);
         hilighter.transform.localScale = (deleting ? hit.transform.localScale : Vector3.one * size);
     }
 
     private void DuplicateFace(RaycastHit hit) {
-        GameObject dupe = Instantiate(gameObject, transform.position + hit.normal * ((size + 1) * 0.5f), transform.rotation, transform.parent);
+        GameObject dupe = Instantiate(gameObject, calculatePos(hit), transform.rotation, transform.parent);
         dupe.transform.localScale = Vector3.one * size;
+        dupe.GetComponent<Duplicator>().personalSize = size;
     }
 }
